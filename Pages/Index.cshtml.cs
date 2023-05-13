@@ -12,6 +12,9 @@ using System.Net;
 using System.Text;
 using System.IO;
 using OpenQA.Selenium;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using WebScraper.Classes;
 
 
 namespace WebScraper.Pages
@@ -27,51 +30,25 @@ namespace WebScraper.Pages
 
         public IActionResult OnGet()
         {
+            var x = Deals();
             return null;
         }
 
-        public List<Deal> Deals()
+        public string Deals()
         {
-            var response = GetScrapedPage("https://www.dollargeneral.com/deals/coupons?sort=0&sortorder=2&type=1");
-            var deals = ParseHtml(response);
-            return deals;
+            string url = "https://www.dollargeneral.com/bin/omni/coupons/search?searchText=&sortOrder=2&sortBy=0&numPageRecords=15&pageIndex=180&categories=&brands=&offerSourceType=1&mixMode=0&deviceId=41783169496082685948046190366069168309&clientOriginStoreNumber=";
+            var response = CallUrl(url).Result;
+
+            DollarGeneral dg = JsonSerializer.Deserialize<DollarGeneral>(response);
+
+            return "";
         }
 
-        public List<Deal> ParseHtml(string html)
+        private static async Task<string> CallUrl(string fullUrl)
         {
-            HtmlDocument htmlDoc = new HtmlDocument();
-            htmlDoc.LoadHtml(html);
-
-            var coupons = htmlDoc.DocumentNode.Descendants("li")
-                .Where(node => node.HasClass("coupons_results-list-item")).ToList();
-
-            
-            List<Deal> deals = new List<Deal>();
-
-            foreach (var coupon in coupons)
-            {
-                var brand = coupon.ChildNodes.Descendants().Where(x => x.HasClass("deal-card__info")).ToList()[0].Descendants().Where(y => y.HasClass("deal-card__brand")).First().InnerText;
-                var savings = coupon.ChildNodes.Descendants().Where(x => x.HasClass("deal-card__info")).ToList()[0].Descendants().Where(y => y.HasClass("deal-card__name")).First().InnerText;
-                var description = coupon.ChildNodes.Descendants().Where(x => x.HasClass("deal-card__info")).ToList()[0].Descendants().Where(y => y.HasClass("deal-card__description")).First().InnerText;
-
-                deals.Add(new Deal(brand, savings, description));
-            }
-
-            return deals;
-        }
-
-        public static string GetScrapedPage(string url)
-        {
-            using (var client = new System.Net.Http.HttpClient())
-            {
-                client.DefaultRequestHeaders.ExpectContinue = false;
-                var pageRequestJson = new System.Net.Http.StringContent
-                    (@"{'url':'" + url + "','renderType':'html','outputAsJson':false }");
-                var response = client.PostAsync
-                    ("https://PhantomJsCloud.com/api/browser/v2/a-demo-key-with-low-quota-per-ip-address/",
-                    pageRequestJson).Result;
-                return response.Content.ReadAsStringAsync().Result;
-            }
+            HttpClient client = new HttpClient();
+            var response = await client.GetStringAsync(fullUrl);
+            return response;
         }
 
         public class Deal
