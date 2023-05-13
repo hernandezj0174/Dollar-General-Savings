@@ -1,0 +1,6 @@
+﻿{
+  "url": "https://www.dollargeneral.com/deals/coupons?sort=0&sortorder=2&type=1",
+  "renderType": "html",
+  "outputAsJson": false,
+  "overseerScript": "page.manualWait(); await page.waitForSelector(\".coupons-results__load-more-button\"); page.click(\".coupons-results__load-more-button\"); await page.waitForFunction(()=>document.querySelector(\".coupons-results__load-more-button\").textContent!==\"\"); page.done();"
+}
